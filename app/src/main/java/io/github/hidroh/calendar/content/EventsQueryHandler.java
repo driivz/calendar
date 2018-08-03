@@ -113,7 +113,7 @@ public abstract class EventsQueryHandler extends AsyncQueryHandler {
 
     @Override
     protected final void onQueryComplete(int token, Object cookie, Cursor cursor) {
-        handleQueryComplete(token, cookie, new EventCursor(cursor));
+//        handleQueryComplete(token, cookie, new EventCursor(cursor));
     }
 
     /**
