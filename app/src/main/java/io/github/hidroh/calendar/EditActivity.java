@@ -30,13 +30,11 @@ import android.widget.Toast;
 import java.lang.ref.WeakReference;
 
 import io.github.hidroh.calendar.content.CalendarCursor;
+import io.github.hidroh.calendar.content.EventModel;
 import io.github.hidroh.calendar.widget.EventEditView;
 
 public class EditActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor> {
 
-    /**
-     * {@link android.os.Parcelable} extra contains {@link EventEditView.Event} to edit
-     */
     public static final String EXTRA_EVENT = "extra:event";
     private static final String STATE_EVENT = "state:event";
     private static final String EXTRA_CALENDAR_ID = "extra:calendarId";
@@ -61,24 +59,24 @@ public class EditActivity extends AppCompatActivity implements LoaderManager.Loa
         getSupportActionBar().setDisplayOptions(
                 ActionBar.DISPLAY_SHOW_HOME | ActionBar.DISPLAY_HOME_AS_UP);
         mEventEditView = (EventEditView) findViewById(R.id.event_edit_view);
-        EventEditView.Event event;
-        if (savedInstanceState == null) {
-            event = getIntent().getParcelableExtra(EXTRA_EVENT);
-            if (event == null) {
-                event = EventEditView.Event.createInstance();
-            }
-            //noinspection ConstantConditions
-            mEventEditView.setEvent(event);
-            Bundle args = new Bundle();
-            args.putLong(EXTRA_CALENDAR_ID, event.getCalendarId());
-            getSupportLoaderManager().initLoader(LOADER_SELECTED_CALENDAR, args, this);
-        } else {
-            event = savedInstanceState.getParcelable(STATE_EVENT);
-            //noinspection ConstantConditions
-            mEventEditView.setEvent(event);
-        }
-        setTitle(event.hasId() ? R.string.edit_event : R.string.create_event);
-        getSupportLoaderManager().initLoader(LOADER_CALENDARS, null, this);
+//        EventEditView.Event event;
+//        if (savedInstanceState == null) {
+//            event = getIntent().getParcelableExtra(EXTRA_EVENT);
+//            if (event == null) {
+//                event = EventEditView.Event.createInstance();
+//            }
+//            //noinspection ConstantConditions
+//            mEventEditView.setEvent(event);
+//            Bundle args = new Bundle();
+//            args.putLong(EXTRA_CALENDAR_ID, event.getCalendarId());
+//            getSupportLoaderManager().initLoader(LOADER_SELECTED_CALENDAR, args, this);
+//        } else {
+//            event = savedInstanceState.getParcelable(STATE_EVENT);
+//            //noinspection ConstantConditions
+//            mEventEditView.setEvent(event);
+//        }
+//        setTitle(event.hasId() ? R.string.edit_event : R.string.create_event);
+//        getSupportLoaderManager().initLoader(LOADER_CALENDARS, null, this);
     }
 
     @Override
@@ -201,41 +199,31 @@ public class EditActivity extends AppCompatActivity implements LoaderManager.Loa
     }
 
     private boolean save() {
-        EventEditView.Event event = mEventEditView.getEvent();
-        if (!isValid(event)) {
-            return false;
-        }
-        ContentValues cv = new ContentValues();
-        cv.put(CalendarContract.Events.TITLE, event.getTitle());
-        cv.put(CalendarContract.Events.DTSTART, event.getStartDateTime());
-        cv.put(CalendarContract.Events.DTEND, event.getEndDateTime());
-        cv.put(CalendarContract.Events.ALL_DAY, event.isAllDay());
-        cv.put(CalendarContract.Events.EVENT_END_TIMEZONE, event.getTimeZone());
-        cv.put(CalendarContract.Events.EVENT_TIMEZONE, event.getTimeZone());
-        cv.put(CalendarContract.Events.CALENDAR_ID, event.getCalendarId());
-        if (event.hasId()) {
-            Uri uri = ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI,
-                    event.getId());
-            new EventQueryHandler(this)
-                    .startUpdate(0, null, uri, cv, null, null);
-        } else {
-            new EventQueryHandler(this)
-                    .startInsert(0, null, CalendarContract.Events.CONTENT_URI, cv);
-        }
+//        EventEditView.Event event = mEventEditView.getEvent();
+//        if (!isValid(event)) {
+//            return false;
+//        }
+//        ContentValues cv = new ContentValues();
+//        cv.put(CalendarContract.Events.TITLE, event.getTitle());
+//        cv.put(CalendarContract.Events.DTSTART, event.getStartDateTime());
+//        cv.put(CalendarContract.Events.DTEND, event.getEndDateTime());
+//        cv.put(CalendarContract.Events.ALL_DAY, event.isAllDay());
+//        cv.put(CalendarContract.Events.EVENT_END_TIMEZONE, event.getTimeZone());
+//        cv.put(CalendarContract.Events.EVENT_TIMEZONE, event.getTimeZone());
+//        cv.put(CalendarContract.Events.CALENDAR_ID, event.getCalendarId());
+//        if (event.hasId()) {
+//            Uri uri = ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI,
+//                    event.getId());
+//            new EventQueryHandler(this)
+//                    .startUpdate(0, null, uri, cv, null, null);
+//        } else {
+//            new EventQueryHandler(this)
+//                    .startInsert(0, null, CalendarContract.Events.CONTENT_URI, cv);
+//        }
         return true;
     }
 
-    private boolean isValid(EventEditView.Event event) {
-        if (!event.hasCalendarId()) {
-            //noinspection ConstantConditions
-            Snackbar.make(findViewById(R.id.coordinator_layout),
-                    R.string.warning_missing_calendar,
-                    Snackbar.LENGTH_SHORT)
-                    .show();
-            return false;
-        }
-        return event.hasTitle();
-    }
+
 
     private void confirmDelete() {
         new AlertDialog.Builder(this)

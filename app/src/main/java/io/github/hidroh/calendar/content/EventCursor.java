@@ -2,12 +2,14 @@ package io.github.hidroh.calendar.content;
 
 import android.database.Cursor;
 import android.database.CursorWrapper;
+import android.database.MatrixCursor;
+import android.opengl.Matrix;
 import android.provider.CalendarContract;
 
 /**
  * {@link android.provider.CalendarContract.Events} cursor wrapper
  */
-public class EventCursor extends CursorWrapper {
+public class EventCursor extends MatrixCursor {
 
     /**
      * {@link android.provider.CalendarContract.Events} query projection
@@ -27,8 +29,8 @@ public class EventCursor extends CursorWrapper {
     private static final int PROJECTION_INDEX_DTEND = 4;
     private static final int PROJECTION_INDEX_ALL_DAY = 5;
 
-    public EventCursor(Cursor cursor) {
-        super(cursor);
+    public EventCursor() {
+        super(PROJECTION);
     }
 
     /**
@@ -84,4 +86,14 @@ public class EventCursor extends CursorWrapper {
     public boolean getAllDay() {
         return getInt(PROJECTION_INDEX_ALL_DAY) == 1;
     }
+
+    public void addEvent(EventModel model){
+        addEvent(model.getId(),model.getCalendarId(),model.getTitle(),model.getStartDateTime(),model.getEndDateTime(),model.isAllDay());
+    }
+
+    public void addEvent(long id, long calendarId, String title, long dateStart, long dateEnd, boolean allDay){
+        addRow(new Object[]{id,calendarId,title,dateStart,dateEnd,(allDay ? 1 : 0)});
+    }
+
+
 }

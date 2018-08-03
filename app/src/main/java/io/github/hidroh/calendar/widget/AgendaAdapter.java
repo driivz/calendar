@@ -28,6 +28,7 @@ import io.github.hidroh.calendar.CalendarUtils;
 import io.github.hidroh.calendar.EditActivity;
 import io.github.hidroh.calendar.R;
 import io.github.hidroh.calendar.content.EventCursor;
+import io.github.hidroh.calendar.content.EventModel;
 import io.github.hidroh.calendar.weather.Weather;
 
 /**
@@ -97,12 +98,6 @@ public abstract class AgendaAdapter extends RecyclerView.Adapter<AgendaAdapter.R
         } else {
             bindTime((EventItem) item, (ContentViewHolder) holder);
             bindColor((EventItem) item, (ContentViewHolder) holder);
-            holder.itemView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    editEvent(v.getContext(), (EventItem) item);
-                }
-            });
         }
     }
 
@@ -429,7 +424,7 @@ public abstract class AgendaAdapter extends RecyclerView.Adapter<AgendaAdapter.R
     }
 
     private void editEvent(Context context, EventItem eventItem) {
-        EventEditView.Event.Builder eventBuilder = new EventEditView.Event.Builder()
+        EventModel.Builder eventBuilder = new EventModel.Builder()
                 .start(eventItem.mStartTimeMillis)
                 .end(eventItem.mEndTimeMillis)
                 .allDay(eventItem.mIsAllDay);

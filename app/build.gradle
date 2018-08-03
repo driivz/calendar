@@ -22,7 +22,6 @@ android {
         absolutePaths false
         ignore "InvalidPackage" // square/okio#58
     }
-
 }
 
 ext {

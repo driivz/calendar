@@ -4,8 +4,6 @@ import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.os.Parcel;
-import android.os.Parcelable;
 import android.provider.CalendarContract;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
@@ -26,12 +24,12 @@ import android.widget.TextView;
 import android.widget.TimePicker;
 
 import java.util.Calendar;
-import java.util.TimeZone;
 
 import io.github.hidroh.calendar.CalendarUtils;
 import io.github.hidroh.calendar.R;
 import io.github.hidroh.calendar.ViewUtils;
 import io.github.hidroh.calendar.content.CalendarCursor;
+import io.github.hidroh.calendar.content.EventModel;
 
 /**
  * Edit view for an event in {@link android.provider.CalendarContract.Events}
@@ -45,11 +43,9 @@ public class EventEditView extends RelativeLayout {
     private final TextView mTextViewStartTime;
     private final TextView mTextViewEndDate;
     private final TextView mTextViewEndTime;
-    private final TextView mTextViewCalendar;
     private final int[] mColors;
     private final int mTransparentColor;
-    private Event mEvent = Event.createInstance();
-    private CalendarCursor mCursor;
+    private EventModel mEvent = EventModel.createInstance();
 
     public EventEditView(Context context) {
         this(context, null);
@@ -74,7 +70,6 @@ public class EventEditView extends RelativeLayout {
         mTextViewStartTime = (TextView) findViewById(R.id.text_view_start_time);
         mTextViewEndDate = (TextView) findViewById(R.id.text_view_end_date);
         mTextViewEndTime = (TextView) findViewById(R.id.text_view_end_time);
-        mTextViewCalendar = (TextView) findViewById(R.id.text_view_calendar);
         mTransparentColor = ContextCompat.getColor(context, android.R.color.transparent);
         if (isInEditMode()) {
             mColors = new int[]{mTransparentColor};
@@ -89,12 +84,12 @@ public class EventEditView extends RelativeLayout {
      * Sets view model for this view
      * @param event    view model representing event to edit
      */
-    public void setEvent(@NonNull Event event) {
+    public void setEvent(@NonNull EventModel event) {
         mEvent = event;
-        mEditTextTitle.setText(event.title);
+        mEditTextTitle.setText(event.getTitle());
         mEditTextTitle.setSelection(mEditTextTitle.length());
-        mSwitchAllDay.setChecked(event.isAllDay);
-        setCalendarId(mEvent.calendarId);
+        mSwitchAllDay.setChecked(event.isAllDay());
+        setCalendarId(mEvent.getCalendarId());
         setDate(true);
         setDate(false);
         setTime(true);
@@ -106,7 +101,7 @@ public class EventEditView extends RelativeLayout {
      * @return  view model representing editing event
      */
     @NonNull
-    public Event getEvent() {
+    public EventModel getEvent() {
         return mEvent;
     }
 
@@ -115,8 +110,6 @@ public class EventEditView extends RelativeLayout {
      * @param cursor    cursor to access list of calendars
      */
     public void swapCalendarSource(CalendarCursor cursor) {
-        mCursor = cursor;
-        mTextViewCalendar.setEnabled(mCursor != null && mCursor.getCount() > 0);
     }
 
     /**
@@ -124,7 +117,6 @@ public class EventEditView extends RelativeLayout {
      * @param calendarName    selected calendar name
      */
     public void setSelectedCalendar(String calendarName) {
-        mTextViewCalendar.setText(calendarName);
     }
 
     private void setupViews() {
@@ -137,7 +129,7 @@ public class EventEditView extends RelativeLayout {
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                mEvent.title = s != null ? s.toString() : "";
+                mEvent.setTitle(s != null ? s.toString() : "");
                 mTextInputTitle.setError(TextUtils.isEmpty(s) ?
                         getResources().getString(R.string.warning_empty_title) : null);
             }
@@ -156,7 +148,7 @@ public class EventEditView extends RelativeLayout {
         mSwitchAllDay.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if (mEvent.isAllDay == isChecked) {
+                if (mEvent.isAllDay() == isChecked) {
                     return;
                 }
                 mEvent.setIsAllDay(isChecked);
@@ -192,55 +184,45 @@ public class EventEditView extends RelativeLayout {
                 showTimePicker(false);
             }
         });
-        mTextViewCalendar.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                showCalendarPicker();
-            }
-        });
-        mTextViewCalendar.setEnabled(false);
     }
 
     private void setDate(boolean startDate) {
         TextView label = startDate ? mTextViewStartDate : mTextViewEndDate;
-        Calendar dateTime = startDate ? mEvent.localStart : mEvent.localEnd;
+        Calendar dateTime = startDate ? mEvent.getStartDate() : mEvent.getEndDate();
         label.setText(CalendarUtils.toDayString(getContext(), dateTime.getTimeInMillis()));
         ensureValidDates(startDate);
     }
 
     private void setTime(boolean startTime) {
         TextView label = startTime ? mTextViewStartTime : mTextViewEndTime;
-        Calendar dateTime = startTime ? mEvent.localStart : mEvent.localEnd;
+        Calendar dateTime = startTime ? mEvent.getStartDate() : mEvent.getEndDate();
         label.setText(CalendarUtils.toTimeString(getContext(), dateTime.getTimeInMillis()));
         ensureValidTimes(startTime);
     }
 
     @VisibleForTesting
     void changeCalendar(int selection) {
-        mCursor.moveToPosition(selection);
-        mTextViewCalendar.setText(mCursor.getDisplayName());
-        setCalendarId(mCursor.getId());
     }
 
     private void setCalendarId(long calendarId) {
-        mEvent.calendarId = calendarId;
-        if (calendarId == Event.NO_ID) {
+        mEvent.setCalendarId(calendarId);
+        if (calendarId == EventModel.NO_ID) {
             setBackgroundColor(mTransparentColor);
         } else {
-            setBackgroundColor(mColors[(int) (Math.abs(mEvent.calendarId) % mColors.length)]);
+            setBackgroundColor(mColors[(int) (Math.abs(mEvent.getCalendarId()) % mColors.length)]);
         }
     }
 
     private void ensureValidDates(boolean startDateChanged) {
         if (startDateChanged) {
-            if (mEvent.localStart.after(mEvent.localEnd)) {
-                mEvent.localEnd.setTimeInMillis(mEvent.localStart.getTimeInMillis());
+            if (mEvent.getStartDate().after(mEvent.getEndDate())) {
+                mEvent.getEndDate().setTimeInMillis(mEvent.getStartDate().getTimeInMillis());
                 setDate(false);
                 setTime(false);
             }
         } else {
-            if (mEvent.localEnd.before(mEvent.localStart)) {
-                mEvent.localStart.setTimeInMillis(mEvent.localEnd.getTimeInMillis());
+            if (mEvent.getEndDate().before(mEvent.getStartDate())) {
+                mEvent.getStartDate().setTimeInMillis(mEvent.getEndDate().getTimeInMillis());
                 setDate(true);
                 setTime(true);
             }
@@ -249,20 +231,20 @@ public class EventEditView extends RelativeLayout {
 
     private void ensureValidTimes(boolean startTimeChanged) {
         if (startTimeChanged) {
-            if (mEvent.localStart.after(mEvent.localEnd)) {
-                mEvent.localEnd.setTimeInMillis(mEvent.localStart.getTimeInMillis());
+            if (mEvent.getStartDate().after(mEvent.getEndDate())) {
+                mEvent.getEndDate().setTimeInMillis(mEvent.getStartDate().getTimeInMillis());
                 setTime(false);
             }
         } else {
-            if (mEvent.localEnd.before(mEvent.localStart)) {
-                mEvent.localStart.setTimeInMillis(mEvent.localEnd.getTimeInMillis());
+            if (mEvent.getEndDate().before(mEvent.getStartDate())) {
+                mEvent.getStartDate().setTimeInMillis(mEvent.getEndDate().getTimeInMillis());
                 setTime(true);
             }
         }
     }
 
     private void showDatePicker(final boolean startDate) {
-        final Calendar dateTime = startDate ? mEvent.localStart : mEvent.localEnd;
+        final Calendar dateTime = startDate ? mEvent.getStartDate() : mEvent.getEndDate();
         new DatePickerDialog(getContext(),
                 new DatePickerDialog.OnDateSetListener() {
                     @Override
@@ -280,7 +262,7 @@ public class EventEditView extends RelativeLayout {
     }
 
     private void showTimePicker(final boolean startTime) {
-        final Calendar dateTime = startTime ? mEvent.localStart : mEvent.localEnd;
+        final Calendar dateTime = startTime ? mEvent.getStartDate() : mEvent.getEndDate();
         new TimePickerDialog(getContext(),
                 new TimePickerDialog.OnTimeSetListener() {
                     @Override
@@ -297,259 +279,4 @@ public class EventEditView extends RelativeLayout {
                 .show();
     }
 
-    private void showCalendarPicker() {
-        new AlertDialog.Builder(getContext())
-                .setCursor(mCursor, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        changeCalendar(which);
-                    }
-                }, CalendarContract.Calendars.CALENDAR_DISPLAY_NAME)
-                .setNegativeButton(android.R.string.cancel, null)
-                .create()
-                .show();
-    }
-
-    /**
-     * View model for {@link EventEditView}.
-     * Event represented by this class is assumed to be in system timezone.
-     */
-    public static class Event implements Parcelable {
-
-        public static final Creator<Event> CREATOR = new Creator<Event>() {
-            @Override
-            public Event createFromParcel(Parcel in) {
-                return new Event(in);
-            }
-
-            @Override
-            public Event[] newArray(int size) {
-                return new Event[size];
-            }
-        };
-
-        /**
-         * Creates an instance of {@link Event} that starts at 'earliest' future time
-         * @return  an {@link Event} instance
-         */
-        public static Event createInstance() {
-            return new Event();
-        }
-
-        /**
-         * Builder utility to build an {@link Event}
-         */
-        public static class Builder {
-            private final Event event = new Event();
-
-            /**
-             * Sets event ID
-             * @param id    event ID
-             * @return  this instance (fluent API)
-             */
-            public Builder id(long id) {
-                event.id = id;
-                return this;
-            }
-
-            /**
-             * Sets event calendar ID
-             * @param calendarId    event calendar ID
-             * @return  this instance (fluent API)
-             */
-            public Builder calendarId(long calendarId) {
-                event.calendarId = calendarId;
-                return this;
-            }
-
-            /**
-             * Sets event title
-             * @param title    event title
-             * @return  this instance (fluent API)
-             */
-            public Builder title(String title) {
-                event.title = title;
-                return this;
-            }
-
-            /**
-             * Sets event start date time
-             * @param timeMillis    start date time in milliseconds
-             * @return  this instance (fluent API)
-             */
-            public Builder start(long timeMillis) {
-                event.localStart.setTimeInMillis(timeMillis);
-                return this;
-            }
-
-            /**
-             * Sets event end date time
-             * @param timeMillis    end date time in milliseconds
-             * @return  this instance (fluent API)
-             */
-            public Builder end(long timeMillis) {
-                event.localEnd.setTimeInMillis(timeMillis);
-                return this;
-            }
-
-            /**
-             * Sets event all day status
-             * @param isAllDay    true if event is all day, false otherwise
-             * @return  this instance (fluent API)
-             */
-            public Builder allDay(boolean isAllDay) {
-                event.isAllDay = isAllDay;
-                return this;
-            }
-
-            /**
-             * Creates the {@link Event} that has been built by this builder
-             * @return  an {@link Event} instance
-             */
-            public Event build() {
-                return event;
-            }
-        }
-
-        private static final long NO_ID = -1;
-
-        long id = NO_ID;
-        long calendarId = NO_ID;
-        String title;
-        boolean isAllDay = false;
-        final Calendar localStart = Calendar.getInstance();
-        final Calendar localEnd = Calendar.getInstance();
-
-        Event() {
-            localStart.add(Calendar.HOUR_OF_DAY, 1);
-            localStart.set(Calendar.MINUTE, 0);
-            localEnd.add(Calendar.HOUR_OF_DAY, 2);
-            localEnd.set(Calendar.MINUTE, 0);
-        }
-
-        Event(Parcel in) {
-            id = in.readLong();
-            calendarId = in.readLong();
-            title = in.readString();
-            isAllDay = in.readByte() != 0;
-            localStart.setTimeInMillis(in.readLong());
-            localEnd.setTimeInMillis(in.readLong());
-        }
-
-        @Override
-        public void writeToParcel(Parcel dest, int flags) {
-            dest.writeLong(id);
-            dest.writeLong(calendarId);
-            dest.writeString(title);
-            dest.writeByte((byte) (isAllDay ? 1 : 0));
-            dest.writeLong(localStart.getTimeInMillis());
-            dest.writeLong(localEnd.getTimeInMillis());
-        }
-
-        @Override
-        public int describeContents() {
-            return 0;
-        }
-
-        /**
-         * Gets event ID
-         * @return  event ID
-         */
-        public long getId() {
-            return id;
-        }
-
-        /**
-         * Checks if this instance has event ID
-         * @return  true for existing events, false otherwise
-         */
-        public boolean hasId() {
-            return id != NO_ID;
-        }
-
-        /**
-         * Checks if this instance has calendar ID
-         * @return  true if have calendar ID, false otherwise
-         */
-        public boolean hasCalendarId() {
-            return calendarId != NO_ID;
-        }
-
-        /**
-         * Checks if event has non-empty title
-         * @return  true if has non-empty title, false otherwise
-         */
-        public boolean hasTitle() {
-            return !TextUtils.isEmpty(title);
-        }
-
-        /**
-         * Gets event title
-         * @return  event title
-         */
-        public String getTitle() {
-            return title;
-        }
-
-        /**
-         * Gets event start date time
-         * @return  start date time in local timezone, or midnight UTC if event is all day
-         */
-        public long getStartDateTime() {
-            if (isAllDay) {
-                return CalendarUtils.toUtcTimeZone(localStart.getTimeInMillis());
-            } else {
-                return localStart.getTimeInMillis();
-            }
-        }
-
-        /**
-         * Gets event end date time
-         * @return  end date time in local timezone, or midnight UTC if event is all day
-         */
-        public long getEndDateTime() {
-            if (isAllDay) {
-                return CalendarUtils.toUtcTimeZone(localEnd.getTimeInMillis());
-            } else {
-                return localEnd.getTimeInMillis();
-            }
-        }
-
-        /**
-         * Checks if event is all day
-         * @return  true if event is all day, false otherwise
-         */
-        public boolean isAllDay() {
-            return isAllDay;
-        }
-
-        /**
-         * Gets event timezone
-         * @return  local system timezone ID, or UTC if event is all day
-         */
-        public String getTimeZone() {
-            return isAllDay ? CalendarUtils.TIMEZONE_UTC : TimeZone.getDefault().getID();
-        }
-
-        /**
-         * Gets event calendar ID
-         * @return  event calendar ID
-         */
-        public long getCalendarId() {
-            return calendarId;
-        }
-
-        void setIsAllDay(boolean isAllDay) {
-            this.isAllDay = isAllDay;
-            if (isAllDay) {
-                localStart.set(Calendar.HOUR_OF_DAY, 0);
-                localStart.set(Calendar.MINUTE, 0);
-                localEnd.set(Calendar.HOUR_OF_DAY, 0);
-                localEnd.set(Calendar.MINUTE, 0);
-                if (localEnd.equals(localStart)) {
-                    localEnd.add(Calendar.DAY_OF_MONTH, 1);
-                }
-            }
-        }
-    }
 }
