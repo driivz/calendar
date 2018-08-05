@@ -148,7 +148,7 @@ public abstract class AgendaAdapter extends RecyclerView.Adapter<AgendaAdapter.R
         }
     }
 
-    void setCalendarColors(int[] calendarColors) {
+    public void setCalendarColors(int[] calendarColors) {
         mColors = calendarColors;
     }
 
@@ -322,6 +322,13 @@ public abstract class AgendaAdapter extends RecyclerView.Adapter<AgendaAdapter.R
             contentHolder.textViewTime.setVisibility(View.GONE);
             return;
         }
+        contentHolder.background.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                onItemClick((Long) view.getTag());
+            }
+        });
+        contentHolder.background.setTag(eventItem.mId);
         contentHolder.textViewTime.setVisibility(View.VISIBLE);
         Context context = contentHolder.textViewTime.getContext();
         switch (eventItem.mDisplayType) {
@@ -341,6 +348,8 @@ public abstract class AgendaAdapter extends RecyclerView.Adapter<AgendaAdapter.R
                 break;
         }
     }
+
+    public abstract void onItemClick(Long id);
 
     private void bindColor(EventItem item, ContentViewHolder holder) {
         if (item instanceof NoEventItem) {
