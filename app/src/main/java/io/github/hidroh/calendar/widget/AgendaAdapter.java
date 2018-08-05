@@ -349,7 +349,9 @@ public abstract class AgendaAdapter extends RecyclerView.Adapter<AgendaAdapter.R
         }
     }
 
-    public abstract void onItemClick(Long id);
+    public void onItemClick(Long id){
+
+    };
 
     private void bindColor(EventItem item, ContentViewHolder holder) {
         if (item instanceof NoEventItem) {
