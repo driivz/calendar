@@ -36,8 +36,6 @@ import io.github.hidroh.calendar.content.EventModel;
  */
 public class EventEditView extends RelativeLayout {
 
-    private final TextInputLayout mTextInputTitle;
-    private final EditText mEditTextTitle;
     private final SwitchCompat mSwitchAllDay;
     private final TextView mTextViewStartDate;
     private final TextView mTextViewStartTime;
@@ -63,8 +61,6 @@ public class EventEditView extends RelativeLayout {
                 verticalPadding = context.getResources()
                         .getDimensionPixelSize(R.dimen.vertical_padding);
         setPadding(horizontalPadding, verticalPadding, horizontalPadding, verticalPadding);
-        mTextInputTitle = (TextInputLayout) findViewById(R.id.text_input_title);
-        mEditTextTitle = (EditText) findViewById(R.id.edit_text_title);
         mSwitchAllDay = (SwitchCompat) findViewById(R.id.switch_all_day);
         mTextViewStartDate = (TextView) findViewById(R.id.text_view_start_date);
         mTextViewStartTime = (TextView) findViewById(R.id.text_view_start_time);
@@ -86,8 +82,6 @@ public class EventEditView extends RelativeLayout {
      */
     public void setEvent(@NonNull EventModel event) {
         mEvent = event;
-        mEditTextTitle.setText(event.getTitle());
-        mEditTextTitle.setSelection(mEditTextTitle.length());
         mSwitchAllDay.setChecked(event.isAllDay());
         setCalendarId(mEvent.getCalendarId());
         setDate(true);
@@ -120,25 +114,6 @@ public class EventEditView extends RelativeLayout {
     }
 
     private void setupViews() {
-        mTextInputTitle.setErrorEnabled(true);
-        mEditTextTitle.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-                // no op
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                mEvent.setTitle(s != null ? s.toString() : "");
-                mTextInputTitle.setError(TextUtils.isEmpty(s) ?
-                        getResources().getString(R.string.warning_empty_title) : null);
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-                // no op
-            }
-        });
         findViewById(R.id.text_view_all_day).setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
