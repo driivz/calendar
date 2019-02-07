@@ -8,7 +8,10 @@ import android.support.v4.view.ViewPager;
 import android.util.AttributeSet;
 import android.view.View;
 
+import java.util.Date;
+
 import io.github.hidroh.calendar.CalendarUtils;
+import io.github.hidroh.calendar.OnMonthChangeListener;
 import io.github.hidroh.calendar.content.EventCursor;
 
 /**
@@ -31,6 +34,7 @@ public class EventCalendarView extends ViewPager {
             };
     private MonthViewPagerAdapter mPagerAdapter;
     private OnChangeListener mListener;
+    OnMonthChangeListener onMonthChangeListener;
     private CalendarAdapter mCalendarAdapter;
 
     /**
@@ -92,6 +96,14 @@ public class EventCalendarView extends ViewPager {
             int height = child.getMeasuredHeight();
             setMeasuredDimension(getMeasuredWidth(), height);
         }
+    }
+
+    public OnMonthChangeListener getOnMonthChangeListener() {
+        return onMonthChangeListener;
+    }
+
+    public void setOnMonthChangeListener(OnMonthChangeListener onMonthChangeListener) {
+        this.onMonthChangeListener = onMonthChangeListener;
     }
 
     /**
@@ -167,17 +179,12 @@ public class EventCalendarView extends ViewPager {
         setAdapter(mPagerAdapter);
         setCurrentItem(mPagerAdapter.getCount() / 2);
         addOnPageChangeListener(new SimpleOnPageChangeListener() {
-            public boolean mDragging = false; // indicate if page change is from user
 
             @Override
             public void onPageSelected(int position) {
-                if (mDragging) {
-                    // sequence: IDLE -> (DRAGGING) -> SETTLING -> onPageSelected -> IDLE
-                    // ensures that this will always be triggered before syncPages() for position
-                    toFirstDay(position);
-                    notifyDayChange(mPagerAdapter.getMonth(position));
+                if(onMonthChangeListener != null){
+                    onMonthChangeListener.onMonthChanged(new Date(mPagerAdapter.getMonth(position)));
                 }
-                mDragging = false;
                 // trigger same scroll state changed logic, which would not be fired if not visible
                 if (getVisibility() != VISIBLE) {
                     onPageScrollStateChanged(SCROLL_STATE_IDLE);
@@ -189,8 +196,6 @@ public class EventCalendarView extends ViewPager {
                 if (state == ViewPager.SCROLL_STATE_IDLE) {
                     syncPages(getCurrentItem());
                     loadEvents(getCurrentItem());
-                } else if (state == SCROLL_STATE_DRAGGING) {
-                    mDragging = true;
                 }
             }
         });
@@ -266,4 +271,5 @@ public class EventCalendarView extends ViewPager {
             }
         }
     }
+
 }

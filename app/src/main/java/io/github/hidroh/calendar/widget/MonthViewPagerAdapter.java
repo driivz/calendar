@@ -25,7 +25,7 @@ import io.github.hidroh.calendar.content.EventCursor;
  * @see #shiftLeft()
  * @see #shiftRight()
  */
-class MonthViewPagerAdapter extends PagerAdapter {
+public class MonthViewPagerAdapter extends PagerAdapter {
     private static final String STATE_FIRST_MONTH_MILLIS = "state:month";
     private static final String STATE_SELECTED_DAY_MILLIS = "state:selectedDay";
     static final int ITEM_COUNT = 5; // buffer, left, active, right, buffer
