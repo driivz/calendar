@@ -73,8 +73,6 @@ class MonthView extends RecyclerView {
         setLayoutManager(new GridLayoutManager(getContext(), SPANS_COUNT));
         setHasFixedSize(true);
         setCalendar(CalendarUtils.today());
-        setClipChildren(false);
-        setClipToPadding(false);
     }
 
     /**
