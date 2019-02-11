@@ -5,7 +5,6 @@
     style="@style/TextAppearance.AppCompat.Body1"
     android:gravity="center"
     android:background="?attr/selectableItemBackgroundBorderless"
-    android:layout_width="match_parent"
+    android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:minHeight="40dp"
     android:padding="10dp"/>
