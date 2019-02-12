@@ -24,12 +24,18 @@ public class RectangularTextView extends android.support.v7.widget.AppCompatText
     }
 
     @Override
+    public void setSelected(boolean selected) {
+        super.setSelected(selected);
+        requestLayout();
+    }
+
+    @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-        super.onSizeChanged(w, w, oldw, oldh);
+        super.onSizeChanged(w, h, oldw, oldh);
     }
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        super.onMeasure(widthMeasureSpec, widthMeasureSpec);
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
     }
 }
